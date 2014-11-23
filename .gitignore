@@ -1,3 +1,4 @@
- # exclude everything except directory foo/bar
-  project2.R
-  workspace.RData
+# exclude everything except directory foo/bar
+mydata.rda
+project2.R
+workspace.RData
