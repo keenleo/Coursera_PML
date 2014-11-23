@@ -1,16 +1,36 @@
+---
+title: "Coursera Machine Learning Course Project: Writen Section"
+output: html_document
+---
+
+##Executive Summary
+
+The goal of this project is to build a predictive algorithm that will predict the exercise “classe variable” based on measurements from several sensors on the subject’s body and equipment. 
+
+We are given a training set of 19622 observations and a test set of 20 observations. We break that up into a 60/40, training/validation set.  Variables with little variance or empty values are removed. Then random forest is used to create the algorithm.
+
+Cross validation is performed using K-Fold method with 6 folds.
+
+The algorithm is run against the 40% validation set to ascertain accuracy and out of sample error.
+
+The model we created has 99.6% accuracy. And out of sample error rate of .4%
+
+The final step is creating the prediction of exercise “classe variable” for the 20 test observations. 
+
+
+##Loading data and requred library
 
 ```{r}
 #load Librarys
 library(randomForest)
 library(randomForestSRC)
 library(caret)
-load(file="mydata.rda")
 #Read Data
 pmlTrain<- read.csv("pml-training.csv", sep=",")
 pmlTest <- read.csv("pml-testing.csv", sep= ",") 
 ```
 
-
+##Remove variables with low variability
 ```{r}
 #set the seed to make your partition reproductible
 set.seed(666)
@@ -20,6 +40,7 @@ filtered <- pmlTrain[, -nzv]
 filtered$X <- NULL
 ```
 
+##Identify and remove variables with mostly NA values
 ```{r}
 #View remaining variable
 head(filtered)
@@ -30,44 +51,53 @@ inc.cols <- c("user_name", "num_window", "roll_belt", "pitch_belt", "yaw_belt", 
 filtered <- filtered[, inc.cols]
 ```
 
+##Partition data into 60% train and 40% validation sets
 ```{r}
-## Partition data into 60% train and 40% test
-#train.flag <- createDataPartition(pmlTrain$classe,p=0.60,list=FALSE)
-## 60% of the sample size
+## Partition data into 60% train and 40% validation sets
 smp_size <- floor(0.6 * nrow(pmlTrain))
 train_ind <- sample(seq_len(nrow(pmlTrain)), size = smp_size)
 filtered.train <- filtered[train_ind, ]
 filtered.test <- filtered[-train_ind, ]
 ```
 
+##Create model using Caret package with Random Forests method
 ```{r}
 #Create model using random forests with caret
-#model <- train(filtered.train$classe ~.,data=filtered.train, method="rf")
+model <- train(filtered.train$classe ~.,data=filtered.train, method="rf")
+save(model, file="model.rda")
+load(file="model.rda")
+```
 
+##Perform cross validation using K-Folds method
+```{r}
 #Run crossvalidation using traning data
-#traincontrol <- trainControl(method = "cv", number = 6)
-#model_crossvalidation <- train(filtered.train$classe~.,data=filtered.train, method="rf",trControl=traincontrol)
+traincontrol <- trainControl(method = "cv", number = 6)
+model_crossvalidation <- train(filtered.train$classe~.,data=filtered.train, method="rf",trControl=traincontrol)
+save(model_crossvalidation, file="model_crossvalidation.rda")
+load(file="model_crossvalidation.rda")
 model_crossvalidation
 ```
 
+##Create prediction using model and validation data set
 ```{r}
 #test model using testing data
-#predTrainTest <- predict(model,filtered.test)
-#save(predTrainTest, file="predTrainTest.rda")
+predTrainTest <- predict(model,filtered.test)
+save(predTrainTest, file="predTrainTest.rda")
 load(file="predTrainTest.rda")
 table(predTrainTest,as.factor(filtered.test$classe))
 
 confusionMatrix(predTrainTest,as.factor(filtered.test$classe))
 ```
 
-
+##pmlTest set
+Once the test set has been pre-processed a prediction is created using the model from previous steps. A function is this run to create the files required for submission.
 ```{r}
 pmlTest.filtered <- pmlTest[, -nzv]
 pmlTest.filtered$X <- NULL
 inc.cols.test <- c("user_name", "num_window", "roll_belt", "pitch_belt", "yaw_belt", "gyros_belt_x", "gyros_belt_y", "gyros_belt_z", "accel_belt_x", "accel_belt_y", "accel_belt_z", "magnet_belt_x", "magnet_belt_y", "magnet_belt_z", "roll_arm", "pitch_arm", "yaw_arm", "total_accel_arm", "gyros_arm_x", "gyros_arm_y", "gyros_arm_z", "accel_arm_x", "accel_arm_y", "accel_arm_z", "magnet_arm_x", "magnet_arm_y", "magnet_arm_z", "roll_dumbbell", "pitch_dumbbell", "yaw_dumbbell", "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z", "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z", "magnet_dumbbell_x", "magnet_dumbbell_y", "magnet_dumbbell_z", "roll_forearm", "pitch_forearm", "yaw_forearm", "total_accel_forearm", "gyros_forearm_x", "gyros_forearm_y", "gyros_forearm_z", "accel_forearm_x", "accel_forearm_y", "accel_forearm_z", "magnet_forearm_x", "magnet_forearm_y", "magnet_forearm_z")
 pmlTest.filtered <- pmlTest.filtered[, inc.cols.test]
 
-
+##Create Prediction for 20 observation test set
 pmlTest.filtered.pred <- predict(model,pmlTest.filtered)
 
 #Create files for prject Submission
@@ -79,4 +109,8 @@ pmlTest.filtered.pred <- predict(model,pmlTest.filtered)
          }
    }
  pml_write_files(pmlTest.filtered.pred)
- ```
+```
+##Results
+The accuracy of the model against the validation set is >99%. Crossvalidation also yelded high accuracy values.
+
+The model predicted the exercise "classe" outcome for the test set with 100% accuracy
