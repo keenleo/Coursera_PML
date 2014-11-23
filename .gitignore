@@ -1,4 +1,0 @@
-# exclude everything except directory foo/bar
-mydata.rda
-project2.R
-workspace.RData
