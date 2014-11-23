@@ -17,7 +17,6 @@ The model we created has 99.6% accuracy. And out of sample error rate of .4%
 
 The final step is creating the prediction of exercise “classe variable” for the 20 test observations. 
 
-
 ##Loading data and requred library
 
 ```{r}
@@ -69,13 +68,15 @@ load(file="model.rda")
 ```
 
 ##Perform cross validation using K-Folds method
+We expect the out of sample error to be less than 1%
+Perfoming K-Folds cross validation on the model show created a model with 99.6% accuracy. And out of sample error rate of .4%. This is acceptable.
 ```{r}
 #Run crossvalidation using traning data
 traincontrol <- trainControl(method = "cv", number = 6)
 model_crossvalidation <- train(filtered.train$classe~.,data=filtered.train, method="rf",trControl=traincontrol)
 save(model_crossvalidation, file="model_crossvalidation.rda")
 load(file="model_crossvalidation.rda")
-model_crossvalidation
+model_crossvalidations
 ```
 
 ##Create prediction using model and validation data set

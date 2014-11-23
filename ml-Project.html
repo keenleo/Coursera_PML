@@ -287,6 +287,8 @@ load(file=&quot;model.rda&quot;)</code></pre>
 </div>
 <div id="perform-cross-validation-using-k-folds-method" class="section level2">
 <h2>Perform cross validation using K-Folds method</h2>
+<p>We expect the out of sample error to be less than 1%.</p>
+<p>Perfoming K-Folds cross validation on the model show created a model with 99.6% accuracy. And out of sample error rate of .4%. This is acceptable.</p>
 <pre class="r"><code>#Run crossvalidation using traning data
 traincontrol &lt;- trainControl(method = &quot;cv&quot;, number = 6)
 model_crossvalidation &lt;- train(filtered.train$classe~.,data=filtered.train, method=&quot;rf&quot;,trControl=traincontrol)
