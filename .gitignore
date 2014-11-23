@@ -1,4 +1,3 @@
  # exclude everything except directory foo/bar
-    *
-    !/ml-Project.RMD
-    !/ml-Project.html
+  project2.R
+  workspace.RData
