@@ -1,0 +1,82 @@
+
+```{r}
+#load Librarys
+library(randomForest)
+library(randomForestSRC)
+library(caret)
+load(file="mydata.rda")
+#Read Data
+pmlTrain<- read.csv("pml-training.csv", sep=",")
+pmlTest <- read.csv("pml-testing.csv", sep= ",") 
+```
+
+
+```{r}
+#set the seed to make your partition reproductible
+set.seed(666)
+#remove variables with near zero variance
+nzv <- nearZeroVar(pmlTrain)
+filtered <- pmlTrain[, -nzv]
+filtered$X <- NULL
+```
+
+```{r}
+#View remaining variable
+head(filtered)
+
+#Remove varialbes that are mostly empty (value = NA)
+inc.cols <- c("user_name", "num_window", "roll_belt", "pitch_belt", "yaw_belt", "gyros_belt_x", "gyros_belt_y", "gyros_belt_z", "accel_belt_x", "accel_belt_y", "accel_belt_z", "magnet_belt_x", "magnet_belt_y", "magnet_belt_z", "roll_arm", "pitch_arm", "yaw_arm", "total_accel_arm", "gyros_arm_x", "gyros_arm_y", "gyros_arm_z", "accel_arm_x", "accel_arm_y", "accel_arm_z", "magnet_arm_x", "magnet_arm_y", "magnet_arm_z", "roll_dumbbell", "pitch_dumbbell", "yaw_dumbbell", "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z", "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z", "magnet_dumbbell_x", "magnet_dumbbell_y", "magnet_dumbbell_z", "roll_forearm", "pitch_forearm", "yaw_forearm", "total_accel_forearm", "gyros_forearm_x", "gyros_forearm_y", "gyros_forearm_z", "accel_forearm_x", "accel_forearm_y", "accel_forearm_z", "magnet_forearm_x", "magnet_forearm_y", "magnet_forearm_z", "classe")
+
+filtered <- filtered[, inc.cols]
+```
+
+```{r}
+## Partition data into 60% train and 40% test
+#train.flag <- createDataPartition(pmlTrain$classe,p=0.60,list=FALSE)
+## 60% of the sample size
+smp_size <- floor(0.6 * nrow(pmlTrain))
+train_ind <- sample(seq_len(nrow(pmlTrain)), size = smp_size)
+filtered.train <- filtered[train_ind, ]
+filtered.test <- filtered[-train_ind, ]
+```
+
+```{r}
+#Create model using random forests with caret
+#model <- train(filtered.train$classe ~.,data=filtered.train, method="rf")
+
+#Run crossvalidation using traning data
+#traincontrol <- trainControl(method = "cv", number = 6)
+#model_crossvalidation <- train(filtered.train$classe~.,data=filtered.train, method="rf",trControl=traincontrol)
+model_crossvalidation
+```
+
+```{r}
+#test model using testing data
+#predTrainTest <- predict(model,filtered.test)
+#save(predTrainTest, file="predTrainTest.rda")
+load(file="predTrainTest.rda")
+table(predTrainTest,as.factor(filtered.test$classe))
+
+confusionMatrix(predTrainTest,as.factor(filtered.test$classe))
+```
+
+
+```{r}
+pmlTest.filtered <- pmlTest[, -nzv]
+pmlTest.filtered$X <- NULL
+inc.cols.test <- c("user_name", "num_window", "roll_belt", "pitch_belt", "yaw_belt", "gyros_belt_x", "gyros_belt_y", "gyros_belt_z", "accel_belt_x", "accel_belt_y", "accel_belt_z", "magnet_belt_x", "magnet_belt_y", "magnet_belt_z", "roll_arm", "pitch_arm", "yaw_arm", "total_accel_arm", "gyros_arm_x", "gyros_arm_y", "gyros_arm_z", "accel_arm_x", "accel_arm_y", "accel_arm_z", "magnet_arm_x", "magnet_arm_y", "magnet_arm_z", "roll_dumbbell", "pitch_dumbbell", "yaw_dumbbell", "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z", "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z", "magnet_dumbbell_x", "magnet_dumbbell_y", "magnet_dumbbell_z", "roll_forearm", "pitch_forearm", "yaw_forearm", "total_accel_forearm", "gyros_forearm_x", "gyros_forearm_y", "gyros_forearm_z", "accel_forearm_x", "accel_forearm_y", "accel_forearm_z", "magnet_forearm_x", "magnet_forearm_y", "magnet_forearm_z")
+pmlTest.filtered <- pmlTest.filtered[, inc.cols.test]
+
+
+pmlTest.filtered.pred <- predict(model,pmlTest.filtered)
+
+#Create files for prject Submission
+ pml_write_files = function(x){
+       n = length(x)
+       for(i in 1:n){
+             filename = paste0("problem_id_",i,".txt")
+             write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+         }
+   }
+ pml_write_files(pmlTest.filtered.pred)
+ ```
